@@ -1,6 +1,6 @@
 import torch
 
-from models.gate_aggregation.spa_spe import *
+from ..spa_spe import *
 from einops import rearrange
 
 
@@ -31,49 +31,6 @@ class stemBlock(nn.Module):
         x1 = x1.squeeze(1)
         x = F.relu(self.bn5(self.conv5(x1)))
         return x
-
-
-# model = stemBlock(in_channel=200, out_channel=128)
-# model.eval()
-# print(model)
-# input = torch.randn(64, 200, 11, 11)
-# y = model(input)
-# print(y.size())
-
-
-# class stemBlock(nn.Module):
-#     def __init__(self, in_channel, out_channel):
-#         super(stemBlock, self).__init__()
-#
-#         # 2D Conv for initial processing
-#         self.conv1 = nn.Conv2d(in_channel, 256, kernel_size=1, stride=1, padding=0, bias=False)
-#         self.bn1 = nn.BatchNorm2d(256)
-#
-#         # Single 3D Conv (1×1×3)
-#         self.conv3d = nn.Conv3d(1, 1, kernel_size=(1, 1, 3), stride=1, padding=(0, 0, 1), bias=False)
-#         self.bn3d = nn.BatchNorm3d(1)
-#
-#         # 2D Conv for final output
-#         self.conv2d = nn.Conv2d(256, out_channel, kernel_size=1, stride=1, padding=0, bias=False)
-#         self.bn2d = nn.BatchNorm2d(out_channel)
-#
-#     def forward(self, x):
-#         # Apply the first 2D conv
-#         x = F.relu(self.bn1(self.conv1(x)))
-#
-#         # Add a channel dimension for 3D conv
-#         x_3d = x.unsqueeze(1)  # (b, 256, h, w) -> (b, 1, 256, h, w)
-#
-#         # Apply 3D conv and batch norm
-#         x_3d = F.relu(self.bn3d(self.conv3d(x_3d)))
-#
-#         # Remove the channel dimension added for 3D conv
-#         x_3d = x_3d.squeeze(1)  # (b, 1, 256, h, w) -> (b, 256, h, w)
-#
-#         # Apply the final 2D conv
-#         x = F.relu(self.bn2d(self.conv2d(x_3d)))
-#
-#         return x
 
 
 class neigh_embed(nn.Module):
@@ -134,14 +91,6 @@ class Embedding(nn.Module):
         return x4
 
 
-# model = Embedding(in_channel=128, embed_dim=32, out_channel=96)
-# model.eval()
-# print(model)
-# input = torch.randn(64, 128, 11, 11)
-# y = model(input)
-# print(y.size())
-
-
 class GlobalAvgPool2d(nn.Module):
     def __init__(self):
         """Global average pooling over the input's spatial dimensions"""
@@ -153,20 +102,6 @@ class GlobalAvgPool2d(nn.Module):
 
 # stage-1
 class MogaBlock_pre(nn.Module):
-    """
-    Args:
-        embed_dims (int): Number of input channels.
-        ffn_ratio (float): The expansion ratio of feedforward network hidden layer channels. Defaults to 4.
-        drop_rate (float): Dropout rate after embedding. Defaults to 0.
-        drop_path_rate (float): Stochastic depth rate. Defaults to 0.1.
-        act_type (str): The activation type for projections and FFNs. Defaults to 'GELU'.
-        norm_cfg (str): The type of normalization layer. Defaults to 'BN'.
-        init_value (float): Init value for Layer Scale. Defaults to 1e-5.
-        attn_dw_dilation (list): Dilations of three DWConv layers.
-        attn_channel_split (list): The raletive ratio of splited channels.
-        attn_act_type (str): The activation type for the gating branch. Defaults to 'SiLU'.
-    """
-
     def __init__(self, dims, neigbor_dims, embed_dims, spe_ratio, attn_channel_split, drop_rate=0., drop_path_rate=0.,
                  act_type='GELU', norm_type='BN', init_value=1e-5, attn_dw_dilation=[1, 2, 3],
                  attn_act_type='SiLU', attn_force_fp32=False,):
@@ -207,14 +142,6 @@ class MogaBlock_pre(nn.Module):
         x = identity + self.drop_path(x)
 
         return x
-
-
-# model = MogaBlock_pre(dims=128, neigbor_dims=32, embed_dims=96)
-# model.eval()
-# print(model)
-# input = torch.randn(64, 128, 11, 11)
-# y = model(input)
-# print(y.size())
 
 
 # stage-2/3/4......
@@ -259,14 +186,6 @@ class MogaBlock(nn.Module):
         x = identity + self.drop_path(x)
 
         return x
-
-
-# model = MogaBlock(in_dims=96, out_dims=64)
-# model.eval()
-# print(model)
-# input = torch.randn(64, 96, 11, 11)
-# y = model(input)
-# print(y.size())
 
 
 class BCA(nn.Module):
@@ -356,10 +275,8 @@ class MyNet(nn.Module):
         x3 = self.stage3(x2)
 
         y1 = self.conv1(x2)  # B, 32, H, W
-        # y2 = torch.cat((x3, y1), dim=1)
         y2 = self.fusion1(x3, y1)  # B, 64, H, W
         y3 = self.conv2(x1)  # B, 64, H, W
-        # y4 = torch.cat((y2, y3), dim=1)
         y4 = self.fusion2(y2, y3)  # B, 128,H,W
 
         # for image classification
@@ -382,14 +299,6 @@ def Moga(dataset):
     elif dataset == 'WHU_HC':  # batchsize=64, lr=0.005
         model = MyNet(band=274, num_classes=16, num_heads=1, spe_ratio=2, attn_channel_split=[1, 3, 4])
     return model
-
-
-# model = MyNet(band=144, num_classes=15, num_heads=1, spe_ratio=4, attn_channel_split=[1, 3, 4])
-# model.eval()
-# print(model)
-# input = torch.randn(64, 144, 11, 11)
-# y = model(input)
-# print(y.size())
 
 
 if __name__ == "__main__":
