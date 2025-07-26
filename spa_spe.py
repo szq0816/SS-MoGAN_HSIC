@@ -71,16 +71,6 @@ class ElementScale(nn.Module):
 
 
 class ChannelAggregationFFN(nn.Module):
-    """An implementation of FFN with Channel Aggregation.
-
-    Args:
-        embed_dims (int): The feature dimension. Same as `MultiheadAttention`.
-        feedforward_channels (int): The hidden dimension of FFNs.
-        kernel_size (int): The depth-wise conv kernel size as the depth-wise convolution. Defaults to 3.
-        act_type (str): The type of activation. Defaults to 'GELU'.
-        ffn_drop (float, optional): Probability of an element to be zeroed in FFN. Default 0.0.
-    """
-
     def __init__(self, embed_dims, feedforward_channels, kernel_size=3, act_type='GELU', ffn_drop=0.):
         super(ChannelAggregationFFN, self).__init__()
 
@@ -117,23 +107,7 @@ class ChannelAggregationFFN(nn.Module):
         return x
 
 
-# model = ChannelAggregationFFN(embed_dims=64, feedforward_channels=256, kernel_size=3, act_type='GELU', ffn_drop=0.)
-# model.eval()
-# print(model)
-# input = torch.randn(64, 64, 11, 11)
-# y = model(input)
-# print(y.size())
-
-
 class MultiOrderDWConv(nn.Module):
-    """Multi-order Features with Dilated DWConv Kernel.
-
-    Args:
-        embed_dims (int): Number of input channels.
-        dw_dilation (list): Dilations of three DWConv layers.
-        channel_split (list): The raletive ratio of three splited channels.
-    """
-
     def __init__(self, embed_dims, dw_dilation=[1, 2, 3], channel_split=[1, 3, 4]):
         super(MultiOrderDWConv, self).__init__()
 
@@ -171,25 +145,8 @@ class MultiOrderDWConv(nn.Module):
         return x
 
 
-# model = MultiOrderDWConv(embed_dims=64, dw_dilation=[1, 2, 3, ], channel_split=[1, 3, 4, ])
-# model.eval()
-# print(model)
-# input = torch.randn(64, 64, 11, 11)
-# y = model(input)
-# print(y.size())
-
-
 class MultiOrderGatedAggregation(nn.Module):
-    """Spatial Block with Multi-order Gated Aggregation.
-
-    Args:
-        embed_dims (int): Number of input channels.
-        attn_dw_dilation (list): Dilations of three DWConv layers.
-        attn_channel_split (list): The raletive ratio of splited channels.
-        attn_act_type (str): The activation type for Spatial Block.
-        Defaults to 'SiLU'.
-    """
-
+    """Spatial Block with Multi-order Gated Aggregation."""
     def __init__(self, embed_dims, attn_dw_dilation=[1, 2, 3], attn_channel_split=[1, 3, 4], attn_act_type='SiLU',
                  attn_force_fp32=False,):
         super(MultiOrderGatedAggregation, self).__init__()
@@ -237,12 +194,3 @@ class MultiOrderGatedAggregation(nn.Module):
             x = self.forward_gating(self.act_gate(g), self.act_gate(v))
         x = x + shortcut
         return x
-
-
-# model = MultiOrderGatedAggregation(embed_dims=64, attn_dw_dilation=[1, 2, 3], attn_channel_split=[1, 3, 4], attn_act_type='SiLU', attn_force_fp32=False,)
-# model.eval()
-# print(model)
-# input = torch.randn(64, 64, 11, 11)
-# y = model(input)
-# print(y.size())
-
